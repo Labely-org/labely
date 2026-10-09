@@ -54,7 +54,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchStudio }) => {
 
         <div className="flex items-center gap-3">
           <a
-            href="https://github.com"
+            href="https://github.com/zorthana/labely"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800 text-xs font-medium text-slate-200 transition-all"
@@ -492,7 +492,7 @@ results = model.train(data="./dataset/data.yaml", epochs=50, imgsz=640)`}</code>
             <button onClick={onLaunchStudio} className="hover:text-white transition-colors">
               Studio
             </button>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+            <a href="https://github.com/zorthana/labely" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
               GitHub Repo
             </a>
             <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">

@@ -482,7 +482,11 @@ export function App() {
   const totalAnnotations = images.reduce((acc, img) => acc + img.annotations.length, 0);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#070a13] text-slate-100 font-sans">
+    <div
+      className={`flex flex-col bg-[#070a13] text-slate-100 font-sans ${
+        isLandingView ? 'min-h-screen w-full overflow-y-auto' : 'h-screen w-screen overflow-hidden'
+      }`}
+    >
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {isLandingView ? (

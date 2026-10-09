@@ -150,37 +150,6 @@ results = model.train(
 
 ---
 
-## 🌐 Connecting Custom Domain `labely.org`
-
-When you push this repository to GitHub:
-
-1. **Create Repository**:
-   ```bash
-   git init
-   git add .
-   git commit -m "feat: initial open source release of Labely"
-   git remote add origin https://github.com/zorthana/labely.git
-   git branch -M main
-   git push -u origin main
-   ```
-
-2. **Enable GitHub Pages**:
-   - Go to your repository **Settings** → **Pages**.
-   - Under **Build and deployment**, set **Source** to **GitHub Actions**.
-   - The included `.github/workflows/deploy.yml` will automatically build and publish to `labely.org`.
-
-3. **DNS Configuration for `labely.org`**:
-   Point your domain DNS records at your registrar (Cloudflare, Namecheap, GoDaddy):
-   - **Apex Domain (`labely.org`) A Records**:
-     - `185.199.108.153`
-     - `185.199.109.153`
-     - `185.199.110.153`
-     - `185.199.111.153`
-   - **`www` Subdomain CNAME Record**: `zorthana.github.io`
-   - The `public/CNAME` file included in this repository already contains `labely.org`.
-
----
-
 ## 🏗️ Tech Stack
 
 - **Frontend Core**: React 19, TypeScript

@@ -138,7 +138,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* GitHub External */}
         <a
-          href="https://github.com"
+          href="https://github.com/zorthana/labely"
           target="_blank"
           rel="noopener noreferrer"
           title="View GitHub Repository"
