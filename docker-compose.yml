@@ -1,0 +1,12 @@
+services:
+  labely:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: labely:latest
+    container_name: labely-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production

@@ -1,0 +1,17 @@
+{
+  "short_name": "Labely",
+  "name": "Labely — Open Source Annotation Studio",
+  "description": "Privacy-first computer vision dataset annotation tool",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "./",
+  "background_color": "#070a13",
+  "theme_color": "#3b82f6",
+  "display": "standalone",
+  "orientation": "any"
+}
