@@ -10,9 +10,11 @@ import {
   RotateCcw,
   Dot,
   GitCommit,
-  CheckCircle2,
   Layers,
   Sparkles,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 import { Annotation, Category, DatasetSplit, ImageItem } from '../types/annotation';
 
@@ -21,12 +23,14 @@ interface SidebarRightProps {
   selectedCategoryId: string;
   onSelectCategory: (id: string) => void;
   onAddCategory: (name: string, color: string) => void;
+  onUpdateCategory: (id: string, name: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
   currentImage: ImageItem | null;
   selectedAnnotationId: string | null;
   onSelectAnnotation: (id: string | null) => void;
   onUpdateAnnotation: (ann: Annotation) => void;
   onDeleteAnnotation: (id: string) => void;
+  onReassignAnnotationCategory?: (annId: string, newClassId: string) => void;
   onAddImageTag: (tag: string) => void;
   onRemoveImageTag: (tag: string) => void;
   onChangeSplit: (split: DatasetSplit) => void;
@@ -38,12 +42,14 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
   selectedCategoryId,
   onSelectCategory,
   onAddCategory,
+  onUpdateCategory,
   onDeleteCategory,
   currentImage,
   selectedAnnotationId,
   onSelectAnnotation,
   onUpdateAnnotation,
   onDeleteAnnotation,
+  onReassignAnnotationCategory,
   onAddImageTag,
   onRemoveImageTag,
   onChangeSplit,
@@ -52,6 +58,13 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('#3b82f6');
   const [showAddCat, setShowAddCat] = useState(false);
+
+  // Category Edit State
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editCatName, setEditCatName] = useState('');
+  const [editCatColor, setEditCatColor] = useState('#3b82f6');
+
+  // Tag Input State
   const [newTagInput, setNewTagInput] = useState('');
 
   const handleCreateCategory = (e: React.FormEvent) => {
@@ -60,6 +73,27 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
     onAddCategory(newCatName.trim(), newCatColor);
     setNewCatName('');
     setShowAddCat(false);
+  };
+
+  const startEditingCat = (c: Category, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingCatId(c.id);
+    setEditCatName(c.name);
+    setEditCatColor(c.color);
+  };
+
+  const handleSaveEditCat = (catId: string, e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!editCatName.trim()) return;
+    onUpdateCategory(catId, editCatName.trim(), editCatColor);
+    setEditingCatId(null);
+  };
+
+  const handleCategoryClick = (catId: string) => {
+    onSelectCategory(catId);
+    if (selectedAnnotationId && onReassignAnnotationCategory) {
+      onReassignAnnotationCategory(selectedAnnotationId, catId);
+    }
   };
 
   const handleAddTag = (e: React.FormEvent) => {
@@ -89,8 +123,8 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
   return (
     <aside className="w-72 flex flex-col bg-[#0d121f] border-l border-slate-800/80 z-20 select-none overflow-hidden h-full">
       {/* 1. Classes / Categories Section */}
-      <div className="flex flex-col border-b border-slate-800/80 p-3.5 max-h-[42%] overflow-y-auto">
-        <div className="flex items-center justify-between mb-2.5">
+      <div className="flex flex-col border-b border-slate-800/80 p-3.5 max-h-[44%] overflow-y-auto">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-blue-400" />
             <h3 className="text-xs font-semibold tracking-wider text-slate-200 uppercase">
@@ -98,13 +132,24 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
             </h3>
           </div>
           <button
-            onClick={() => setShowAddCat(!showAddCat)}
+            onClick={() => {
+              setShowAddCat(!showAddCat);
+              setEditingCatId(null);
+            }}
             className="flex items-center gap-1 text-xs px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             New
           </button>
         </div>
+
+        {/* Banner if an annotation is selected */}
+        {selectedAnnotationId && (
+          <div className="mb-2.5 px-2 py-1 bg-blue-950/60 border border-blue-500/40 rounded-md text-[11px] text-blue-300 flex items-center justify-between">
+            <span className="font-medium">Active shape selected</span>
+            <span className="text-[10px] text-blue-400 font-mono">Click class or [1-9] to reassign</span>
+          </div>
+        )}
 
         {/* Add Class Form */}
         {showAddCat && (
@@ -123,6 +168,7 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
                 value={newCatColor}
                 onChange={(e) => setNewCatColor(e.target.value)}
                 className="w-7 h-7 rounded border-none cursor-pointer bg-transparent"
+                title="Class color"
               />
             </div>
             <div className="flex justify-end gap-1.5">
@@ -150,11 +196,53 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
             const countInImage =
               currentImage?.annotations.filter((a) => a.classId === c.id).length || 0;
 
+            if (editingCatId === c.id) {
+              return (
+                <form
+                  key={c.id}
+                  onSubmit={(e) => handleSaveEditCat(c.id, e)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1.5 p-1.5 bg-slate-900/95 border border-blue-500/80 rounded-lg shadow-sm"
+                >
+                  <input
+                    type="color"
+                    value={editCatColor}
+                    onChange={(e) => setEditCatColor(e.target.value)}
+                    className="w-6 h-6 rounded cursor-pointer border-none bg-transparent flex-shrink-0"
+                    title="Change color"
+                  />
+                  <input
+                    type="text"
+                    value={editCatName}
+                    onChange={(e) => setEditCatName(e.target.value)}
+                    className="flex-1 min-w-0 text-xs bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-white focus:outline-none focus:border-blue-400"
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    className="p-1 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/50 rounded"
+                    title="Save class"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingCatId(null)}
+                    className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded"
+                    title="Cancel"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </form>
+              );
+            }
+
             return (
               <div
                 key={c.id}
-                onClick={() => onSelectCategory(c.id)}
-                className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-all duration-150 text-xs ${
+                onClick={() => handleCategoryClick(c.id)}
+                title={selectedAnnotationId ? `Click to reassign selected shape to "${c.name}"` : `Set active class to "${c.name}"`}
+                className={`group flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-all duration-150 text-xs ${
                   isSelected
                     ? 'bg-blue-600/20 text-white border border-blue-500/50'
                     : 'text-slate-300 hover:bg-slate-800/60'
@@ -171,17 +259,29 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <span className="text-[11px] text-slate-400 font-mono bg-slate-800/80 px-1.5 py-0.2 rounded">
                     {countInImage}
                   </span>
+                  
+                  {/* Edit button */}
+                  <button
+                    onClick={(e) => startEditingCat(c, e)}
+                    className="text-slate-400 hover:text-blue-400 p-0.5 opacity-40 group-hover:opacity-100 transition-opacity"
+                    title="Edit class name & color"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+
+                  {/* Delete button */}
                   {categories.length > 1 && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteCategory(c.id);
                       }}
-                      className="text-slate-500 hover:text-red-400 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-slate-500 hover:text-red-400 p-0.5 opacity-40 group-hover:opacity-100 transition-opacity"
+                      title="Delete class"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -220,7 +320,7 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
             </div>
           )}
 
-          {currentImage?.annotations.map((ann, idx) => {
+          {currentImage?.annotations.map((ann) => {
             const cat = categories.find((c) => c.id === ann.classId) || categories[0];
             const isSelected = ann.id === selectedAnnotationId;
 
@@ -228,48 +328,97 @@ export const SidebarRight: React.FC<SidebarRightProps> = ({
               <div
                 key={ann.id}
                 onClick={() => onSelectAnnotation(ann.id)}
-                className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer text-xs border transition-all ${
+                className={`flex flex-col p-2 rounded-lg cursor-pointer text-xs border transition-all ${
                   isSelected
-                    ? 'bg-blue-600/25 border-blue-500 text-white shadow'
+                    ? 'bg-blue-600/20 border-blue-500 text-white shadow'
                     : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-center gap-2 truncate">
-                  {getShapeIcon(ann.type)}
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: cat.color }}
-                  />
-                  <span className="truncate font-medium">{ann.label || cat.name}</span>
-                  {ann.confidence && (
-                    <span className="text-[10px] text-emerald-400 font-mono">
-                      {(ann.confidence * 100).toFixed(0)}%
-                    </span>
-                  )}
+                {/* Header row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 truncate">
+                    {getShapeIcon(ann.type)}
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                    <span className="truncate font-medium">{ann.label || cat.name}</span>
+                    {ann.confidence && (
+                      <span className="text-[10px] text-emerald-400 font-mono">
+                        {(ann.confidence * 100).toFixed(0)}%
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpdateAnnotation({ ...ann, locked: !ann.locked });
+                      }}
+                      className="text-slate-500 hover:text-slate-300 p-1"
+                      title={ann.locked ? 'Unlock' : 'Lock'}
+                    >
+                      {ann.locked ? <Lock className="w-3 h-3 text-amber-400" /> : <Unlock className="w-3 h-3" />}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteAnnotation(ann.id);
+                      }}
+                      className="text-slate-500 hover:text-red-400 p-1"
+                      title="Delete annotation"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onUpdateAnnotation({ ...ann, locked: !ann.locked });
-                    }}
-                    className="text-slate-500 hover:text-slate-300 p-1"
-                    title={ann.locked ? 'Unlock' : 'Lock'}
+                {/* Expanded editing controls when selected */}
+                {isSelected && (
+                  <div
+                    className="mt-2 pt-2 border-t border-slate-800/80 space-y-1.5"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    {ann.locked ? <Lock className="w-3 h-3 text-amber-400" /> : <Unlock className="w-3 h-3" />}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteAnnotation(ann.id);
-                    }}
-                    className="text-slate-500 hover:text-red-400 p-1"
-                    title="Delete annotation"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono text-slate-400 w-11 flex-shrink-0">Class:</span>
+                      <select
+                        value={ann.classId}
+                        onChange={(e) => {
+                          const newClassId = e.target.value;
+                          if (onReassignAnnotationCategory) {
+                            onReassignAnnotationCategory(ann.id, newClassId);
+                          } else {
+                            const targetCat = categories.find((c) => c.id === newClassId);
+                            onUpdateAnnotation({
+                              ...ann,
+                              classId: newClassId,
+                              label: targetCat ? targetCat.name : ann.label,
+                            });
+                          }
+                        }}
+                        className="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-blue-500"
+                      >
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono text-slate-400 w-11 flex-shrink-0">Label:</span>
+                      <input
+                        type="text"
+                        value={ann.label || ''}
+                        placeholder={cat.name}
+                        onChange={(e) => onUpdateAnnotation({ ...ann, label: e.target.value })}
+                        className="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

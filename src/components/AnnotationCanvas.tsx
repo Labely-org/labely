@@ -212,7 +212,7 @@ export const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
 
           // Label Tag
           if (showLabels) {
-            renderTag(ctx, cat?.name || 'Class', ann.x, ann.y, color, transform.scale);
+            renderTag(ctx, ann.label || cat?.name || 'Class', ann.x, ann.y, color, transform.scale);
           }
         } else if (ann.type === 'polygon' && ann.points.length >= 2) {
           ctx.beginPath();
@@ -235,7 +235,7 @@ export const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
           });
 
           if (showLabels && ann.points.length > 0) {
-            renderTag(ctx, cat?.name || 'Polygon', ann.points[0].x, ann.points[0].y, color, transform.scale);
+            renderTag(ctx, ann.label || cat?.name || 'Polygon', ann.points[0].x, ann.points[0].y, color, transform.scale);
           }
         } else if (ann.type === 'obb') {
           const corners = obbToCorners(ann);
@@ -255,7 +255,7 @@ export const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
           ctx.fill();
 
           if (showLabels) {
-            renderTag(ctx, `${cat?.name} (${ann.angle.toFixed(0)}°)`, corners[0].x, corners[0].y, color, transform.scale);
+            renderTag(ctx, `${ann.label || cat?.name} (${ann.angle.toFixed(0)}°)`, corners[0].x, corners[0].y, color, transform.scale);
           }
         } else if (ann.type === 'point') {
           ctx.beginPath();
@@ -267,7 +267,7 @@ export const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
           ctx.stroke();
 
           if (showLabels) {
-            renderTag(ctx, cat?.name || 'Point', ann.x + 8 / transform.scale, ann.y, color, transform.scale);
+            renderTag(ctx, ann.label || cat?.name || 'Point', ann.x + 8 / transform.scale, ann.y, color, transform.scale);
           }
         } else if (ann.type === 'polyline' && ann.points.length >= 2) {
           ctx.beginPath();
@@ -286,7 +286,7 @@ export const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
           });
 
           if (showLabels && ann.points.length > 0) {
-            renderTag(ctx, cat?.name || 'Line', ann.points[0].x, ann.points[0].y, color, transform.scale);
+            renderTag(ctx, ann.label || cat?.name || 'Line', ann.points[0].x, ann.points[0].y, color, transform.scale);
           }
         }
       });

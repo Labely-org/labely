@@ -118,7 +118,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchStudio }) => {
         </div>
 
         {/* Live Interactive Hero Mockup */}
-        <div className="w-full max-w-4xl rounded-2xl bg-gradient-to-b from-slate-800/80 to-slate-950 p-1.5 shadow-2xl border border-slate-700/80 relative group">
+        <div
+          onClick={onLaunchStudio}
+          title="Click to launch interactive Annotation Studio"
+          className="w-full max-w-4xl rounded-2xl bg-gradient-to-b from-slate-800/80 to-slate-950 p-1.5 shadow-2xl border border-slate-700/80 relative group cursor-pointer hover:border-blue-500/50 transition-colors"
+        >
           <div className="rounded-xl bg-[#090d16] overflow-hidden border border-slate-800">
             {/* Mock Header */}
             <div className="flex items-center justify-between px-4 py-2 bg-[#0d121f] border-b border-slate-800 text-xs">

@@ -89,6 +89,15 @@ export function App() {
     });
   }, []);
 
+  // Sync URL hash with view mode
+  useEffect(() => {
+    const handleHash = () => {
+      setIsLandingView(window.location.hash !== '#studio');
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
   // Sync to IndexedDB with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -205,6 +214,67 @@ export function App() {
     setCategories((prev) => [...prev, newCat]);
     setSelectedCategoryId(newCat.id);
   }, []);
+
+  // Update Category (Name & Color)
+  const handleUpdateCategory = useCallback(
+    (catId: string, name: string, color: string) => {
+      pushHistory();
+      setCategories((prev) =>
+        prev.map((c) => (c.id === catId ? { ...c, name, color } : c))
+      );
+      // Synchronize image annotations with the new class name
+      setImages((prev) =>
+        prev.map((img) => ({
+          ...img,
+          annotations: img.annotations.map((a) => {
+            if (a.classId === catId) {
+              return {
+                ...a,
+                label: name,
+              };
+            }
+            return a;
+          }),
+        }))
+      );
+      addToast(`Updated class "${name}"`, 'success');
+    },
+    [pushHistory, addToast]
+  );
+
+  // Reassign Selected Annotation Category
+  const handleReassignAnnotationCategory = useCallback(
+    (annId: string, newClassId: string) => {
+      if (!currentImage) return;
+      const targetCat = categories.find((c) => c.id === newClassId);
+      if (!targetCat) return;
+
+      pushHistory();
+      setImages((prev) =>
+        prev.map((img) => {
+          if (img.id === currentImage.id) {
+            return {
+              ...img,
+              annotations: img.annotations.map((a) => {
+                if (a.id === annId) {
+                  return {
+                    ...a,
+                    classId: newClassId,
+                    label: targetCat.name,
+                  };
+                }
+                return a;
+              }),
+            };
+          }
+          return img;
+        })
+      );
+      setSelectedCategoryId(newClassId);
+      addToast(`Reassigned to ${targetCat.name}`, 'info');
+    },
+    [currentImage, categories, pushHistory, addToast]
+  );
 
   // Delete Category
   const handleDeleteCategory = useCallback(
@@ -432,8 +502,8 @@ export function App() {
   // Keyboard Shortcuts Hook
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing inside input
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      // Ignore if typing inside input, textarea, or select
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
 
       const key = e.key.toLowerCase();
 
@@ -463,7 +533,13 @@ export function App() {
       // Class 1-9 shortcuts
       const num = parseInt(e.key, 10);
       if (!isNaN(num) && num >= 1 && num <= 9 && categories[num - 1]) {
-        setSelectedCategoryId(categories[num - 1].id);
+        const cat = categories[num - 1];
+        if (selectedAnnotationId && currentImage) {
+          handleReassignAnnotationCategory(selectedAnnotationId, cat.id);
+        } else {
+          setSelectedCategoryId(cat.id);
+          addToast(`Active class: ${cat.name}`, 'info');
+        }
       }
     };
 
@@ -472,11 +548,15 @@ export function App() {
   }, [
     categories,
     selectedAnnotationId,
+    currentImage,
+    handleReassignAnnotationCategory,
     handleDeleteAnnotation,
+    handleFitToScreen,
     handleNextImage,
     handlePrevImage,
     handleUndo,
     handleRedo,
+    addToast,
   ]);
 
   const totalAnnotations = images.reduce((acc, img) => acc + img.annotations.length, 0);
@@ -557,7 +637,9 @@ export function App() {
               selectedCategoryId={selectedCategoryId}
               onSelectCategory={setSelectedCategoryId}
               onAddCategory={handleAddCategory}
+              onUpdateCategory={handleUpdateCategory}
               onDeleteCategory={handleDeleteCategory}
+              onReassignAnnotationCategory={handleReassignAnnotationCategory}
               currentImage={currentImage}
               selectedAnnotationId={selectedAnnotationId}
               onSelectAnnotation={setSelectedAnnotationId}

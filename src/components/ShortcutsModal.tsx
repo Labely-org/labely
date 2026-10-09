@@ -20,7 +20,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
         { key: 'K', desc: 'Keypoint / Point' },
         { key: 'L', desc: 'Polyline / Lane Line' },
         { key: 'W', desc: 'Magic Wand Auto-Contour' },
-        { key: '1 - 9', desc: 'Quick switch Active Class' },
+        { key: '1 - 9', desc: 'Active Class / Reassign selected label' },
       ],
     },
     {
