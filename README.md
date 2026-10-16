@@ -70,7 +70,7 @@ Labely can be packaged as a lightweight native desktop application:
 
 ```bash
 # Clone the repository
-git clone https://github.com/zorthana/labely.git
+git clone https://github.com/Labely-org/labely.git
 cd labely
 
 # Install dependencies
